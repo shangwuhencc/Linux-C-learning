@@ -1,12 +1,14 @@
-/*é¢„å¤„ç†è¿‡ç¨‹ï¼Œå®šä¹‰å…¨å±€å˜é‡ï¼Œå£°æ˜å‡½æ•°å’Œç»“æ„ä½“*/
-/*å¤´æ–‡ä»¶å¼•ç”¨*/
+/*Ô¤´¦Àí¹ı³Ì£¬¶¨ÒåÈ«¾Ö±äÁ¿£¬ÉùÃ÷º¯ÊıºÍ½á¹¹Ìå*/
+/*Í·ÎÄ¼şÒıÓÃ*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <dos.h>      //ï¼Ÿ
-#include <graphics.h>  //å›¾å½¢å‡½æ•°åº“
-#include "datastruc.h";   /*åº•æ¿ç»“æ„ã€æ–¹å—ç»“æ„ã€æ–¹å—åˆå§‹åŒ–*/
+#include <dos.h>      //£¿
+#include <graphics.h>  //Í¼ĞÎº¯Êı¿â
 
-/*å®šä¹‰æŒ‰é”®ç ,è™šæ‹Ÿé”®å€¼*/
+
+#define MAX_BOX 19
+
+/*¶¨Òå°´¼üÂë,ĞéÄâ¼üÖµ*/
 #define VK_LEFT 0x4b00
 #define VK_RIGHT 0x4d00
 #define VK_DOWN 0x5000
@@ -14,35 +16,159 @@
 #define VK_ESC 0x011b
 #define TIMER 0x1c
 
-/*å®šä¹‰å¸¸é‡*/
+/*¶¨Òå³£Á¿*/
 #define BSIZE 20
 #define Sys_x 160
-#define Sys_y 25         /*æ˜¾ç¤ºæ–¹å—ç•Œé¢çš„å·¦ä¸Šè§’åæ ‡*/
+#define Sys_y 25         /*ÏÔÊ¾·½¿é½çÃæµÄ×óÉÏ½Ç×ø±ê*/
 #define Horizontal_boxs 10
-#define Vertical_boxs 15     /*ä»¥æ–¹å—ä¸ºå•ä½çš„é•¿åº¦*/
-#define Begin_boxs_x Horizontal_boxes 2    /*ç¬¬ä¸€ä¸ªæ–¹å—èµ·å§‹ä½ç½®*/
+#define Vertical_boxs 15     /*ÒÔ·½¿éÎªµ¥Î»µÄ³¤¶È*/
+#define Begin_boxs_x Horizontal_boxes 2    /*µÚÒ»¸ö·½¿éÆğÊ¼Î»ÖÃ*/
 
-#define EgColor 3   /*å‰æ™¯é¢œè‰²*/
-#define EgColor 0   /*èƒŒæ™¯é¢œè‰²*/
+#define EgColor 3   /*Ç°¾°ÑÕÉ«*/
+#define EgColor 0   /*±³¾°ÑÕÉ«*/
 
-#define LeftWin_x Sys_x+Horizontal_boxs*BSIZE+46     /*å³è¾¹çŠ¶æ€æ xåæ ‡*/
+#define LeftWin_x Sys_x+Horizontal_boxs*BSIZE+46     /*ÓÒ±ß×´Ì¬À¸x×ø±ê*/
 
 #define false 0
 #define true 1
 
-/*ç§»åŠ¨çš„æ–¹å‘*/
+/*ÒÆ¶¯µÄ·½Ïò*/
 #define MoveLeft 1
 #define MoveRight 2
 #define MoveDown 3
 #define MoveRoll 4
 
-/*å®šä¹‰å…¨å±€å˜é‡*/
-int current_box_numb;    /*ä¿å­˜å½“å‰æ–¹å—ç¼–å·*/
-/*x,yä¿å­˜æ–¹å—å½“å‰åæ ‡*/
+/*¶¨ÒåÈ«¾Ö±äÁ¿*/
+int current_box_numb;    /*±£´æµ±Ç°·½¿é±àºÅ*/
+/*x,y±£´æ·½¿éµ±Ç°×ø±ê*/
 int Curbox_x = Sys_x + Begin_boxs_x*BSIZE, Curbox_y = Sys_y;
-int flag_newbox = false;   /*æ ‡è®°æ˜¯å¦äº§ç”Ÿæ–°æ–¹å—*/
-int speed = 0;            /*ä¸‹è½é€Ÿåº¦*/
-int score = 0;             /*æ¯ç­‰çº§æ‰€éœ€è¦åˆ†æ•°*/
+int flag_newbox = false;   /*±ê¼ÇÊÇ·ñ²úÉúĞÂ·½¿é*/
+int speed = 0;            /*ÏÂÂäËÙ¶È*/
+int score = 0;             /*Ã¿µÈ¼¶ËùĞèÒª·ÖÊı*/
 
-/*æŒ‡å‘åŸæ—¶é’Ÿä¸­æ–­å¤„ç†è¿‡ç¨‹å…¥å£çš„ä¸­æ–­å¤„ç†å‡½æ•°æŒ‡é’ˆ*/
+/*ÓÎÏ·µ×°å½á¹¹Ìå*/
+struct BOARD{
+	int var;   /*×´Ì¬Ö»ÓĞ0ºÍ1,1±íÊ¾ÒÑ±»Õ¼ÓÃ*/
+	int color;   /*ÑÕÉ«±àºÅ*/
+	}Table_board[Vertical_boxs][Horizontal_boxs];
+
+/*
+	ÓÎÏ··½¿é½á¹¹Ìå
+	·½¿é¶¼ÊÇÔÚ4*4´ó¿éÄÚ
+	4bits±íÊ¾Ò»ĞĞ£¬ËÄĞĞÒ»¹²ÓÃÁ½¸ö×Ö½Ú
+*/
+
+struct SHAPE{
+	char box[2];  /*2×Ö½Ú±íÊ¾·½¿éĞÎ×´*/
+	int color;  /*·½¿éÑÕÉ«*/
+	int next;   /*ÏÂ¸ö·½¿é±àºÅ£¬ÓĞ19ÖÖ*/
+	};
+
+/*
+	SHAPE ½á¹¹Êı×é
+	³õÊ¼»¯·½¿éÄÚÈİ£¬¶¨ÒåMAX_BOX¸öSHAPEÀàĞÍµÄ½á¹¹Êı×é£¬²¢³õÊ¼»¯
+*/
+struct SHAPE shapes[MAX_BOX]=
+{
+	/*
+	* *   * * *   * *      *
+	* *   *         *  * * *
+	* * *           * 
+	*/
+	{0x88,  0xc0,  CYAN,  1}£¬
+	{0xe8,  0x0,   CYAN,  2}£¬
+	{0xc4,  0x40,  CYAN,  3}£¬
+	{0x2e,  0x0,   CYAN,  0}£¬
+	
+	/*
+	*   *         * *  * * *
+	*   * *       *        *
+	* * * * * *   * 
+	*/
+	{0x44,  0xc0,  MAGENTA,  5}£¬
+	{0x8e,  0x0,   MAGENTA,  6}£¬
+	{0xc8,  0x80,  MAGENTA,  7}£¬
+	{0xe2,  0x0,   MAGENTA,  4}£¬
+	
+	/*
+	*  *            
+	*  * *     * *
+	*    *   * *   
+	*/
+	{0x8c,  0x40,  YELLOW,  9},
+	{0x6c,  0x0,   YELLOW,  8},
+	
+	/*
+	*    *            
+	*  * *  * *
+	*  *      * *   
+	*/
+	{0x4c,  0x80,  BROWN,  11},
+	{0xc6,  0x0,   BROWN,  10},
+	
+	/*
+	*   *    *    * * *     *
+	* * * *  * *    *     * *
+	*        *              *
+	*/
+	{0x4e,  0x0,   WHITE,  13}£¬
+	{0x8c,  0x80,  WHITE,  14}£¬
+	{0xe4,  0x0,   WHITE,  15}£¬
+	{0x4c,  0x40,  WHITE,  12}£¬
+	
+	/*
+	*  *            
+	*  *   * * *
+	*  *      
+	*/
+	{0x88,  0x88,  RED,  17},
+	{0xf0,  0x0,   RED,  16},
+	
+	/*
+	*  * *          
+	*  * *      
+	*/
+	{0xcc,  0x0,  BLUE,  18}
+	};
+
+/*Ö¸ÏòÔ­Ê±ÖÓÖĞ¶Ï´¦Àí¹ı³ÌÈë¿ÚµÄÖĞ¶Ï´¦Àíº¯ÊıÖ¸Õë*/
 void interrupt (*oldtimer)(void);
+
+/*ÏÔÊ¾·ÖÊı*/
+void ShowScore(int score);
+
+/*ÏÔÊ¾ËÙ¶È*/
+void ShowSpeed(int speed);
+
+/*°ïÖúÌáÊ¾*/
+void show_help(int xs, int ys);
+
+/*ÊµÏÖĞÂµÄÊ±ÖÓ*/
+void interrupt newtimer(void);
+
+/*SetTimerÉèÖÃĞÂÊ±ÖÓ´¦Àí¹ı³Ì*/
+void SetTimer(void interrupt (*IntProc)(void));
+
+/*KillTimer»Ö¸´Ô­ÓĞµÄÊ±ÖÓ´¦Àí¹ı³Ì*/
+void KillTimer();
+
+/*initialize³õÊ¼»¯½âÂë*/
+void initialize(int x, int y, int m, int n);
+
+/*DelFullRowÉ¾³ıÂúĞĞ£¬yÉèÖÃÉ¾³ıµÄĞĞÊı*/
+int DelFullRow(int y);
+
+/*setFullRow²éÑ¯ÂúĞĞ,µ÷ÓÃÉÏÃæµÄ*/
+void setFullRow(int t_boardy);
+
+/*MkNextBoxÉú³ÉÏÂÒ»¸öÓÎÏ··½¿é£¬·µ»Ø·½¿éºÅ*/
+int MkNextBox(int box_numb);
+
+/*EraseBoxÏû³ı·½¿é*/
+void EraseBox(int x, int y, int box_numb);
+
+/*show_boxÏÔÊ¾Ò»¸ö·½¿é*/
+void show_box(int x, int y, int box_numb);
+
+/*MoveAble»ñµÃÒÆ¶¯·½Ïò*/
+int MoveAble(int x, int y, int box_numb, int direction);
